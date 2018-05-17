@@ -33,6 +33,11 @@ class Node():
         List of connected element objects
         """
         
+        self.isActive = True
+        """
+        _Boolean_, denotes whether node is active or not
+        """
+        
         self.freedomVals = npy.zeros((4,))
         
         
@@ -49,5 +54,22 @@ class Node():
             print(val)
         
         print("")
+        
+    def plot(self,ax,plot_ID:bool=False):
+        """
+        Visualise node by plotting onto given set of axes
+        """
+        
+        if self.isActive:
+            ms = '.'
+            c = 'b'
+        else:
+            ms = 'x'
+            c = 'r'
+            
+        ax.plot(self.x,self.y,color=c,marker=ms)
+        
+        if plot_ID:
+            ax.text(self.x,self.y,"%d" % self.ID,color=c)
         
 

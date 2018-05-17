@@ -44,7 +44,7 @@ class BestFitMesh():
 
         
 
-    def run(self,pointCloud_fName="test_data.csv"):
+    def run(self,pointCloud_fName="test_data.csv",makePlots=True):
         """
         Function to run analysis on given point cloud data
         """
@@ -54,6 +54,11 @@ class BestFitMesh():
         """
         _List_ of `Point` objects, defining point cloud to be analysed
         """
+        
+        if makePlots:
+            self.plot_points(plot_nodes=False,
+                             plot_node_IDs=False,
+                             plot_element_IDs=False)
         
         
         
@@ -165,7 +170,8 @@ class BestFitMesh():
             node_objs = [self.node_dict[x] for x in node_IDs]
             
             # Define element
-            element_dict[e] = element.Element(ID=e,connectedNodes=node_objs)
+            element_dict[e] = element.Element(ID=e,connectedNodes=node_objs,
+                                              Le_x=self.Le_x,Le_y=self.Le_y)
         
         return element_dict
     
@@ -189,6 +195,8 @@ class BestFitMesh():
         
         
     def plot_mesh(self,ax=None,
+                  plot_nodes=True,
+                  plot_elements=True,
                   plot_node_IDs=True,
                   plot_element_IDs=True):
         
@@ -199,20 +207,13 @@ class BestFitMesh():
             
         fig.suptitle("Mesh numbering")
            
-        for elem_obj in self.element_dict.values():
+        if plot_elements:
+            for elem_obj in self.element_dict.values():
+                elem_obj.plot(ax,plot_ID=plot_element_IDs)
             
-            x_vals = [node.x for node in elem_obj.connectedNodes]
-            y_vals = [node.y for node in elem_obj.connectedNodes]
-                
-            ax.plot(x_vals,y_vals,'k',marker='.',markeredgecolor='r')
-            
-            if plot_element_IDs:
-                ax.text(numpy.mean(x_vals),numpy.mean(y_vals),
-                        "%d" % elem_obj.ID)
-            
-        if plot_node_IDs:
-            for nodeobj in self.node_dict.values():
-                ax.text(nodeobj.x,nodeobj.y,"%d" % nodeobj.ID,color='r')
+        if plot_nodes:
+            for node_obj in self.node_dict.values():
+                node_obj.plot(ax,plot_ID=plot_node_IDs)
             
         ax.set_xlim([0,self.L_x])
         ax.set_ylim([0,self.L_y])
@@ -226,10 +227,14 @@ class BestFitMesh():
         Plots xy locations of points in the point cloud being analysed
         """
         
-        fig,ax = self.plot_mesh(kwargs)
+        fig,ax = self.plot_mesh(**kwargs)
         
-        points_xyz = self.points_xyz
-        ax.plot(points_xyz[:,0],points_xyz[:,1],'b.')
+        x_vals = [p.x for p in self.points_list]
+        y_vals = [p.y for p in self.points_list]
+        
+        ax.plot(x_vals,y_vals,'b.')
+        
+        fig.suptitle("Mesh with point cloud overlaid")
         
         
     def read_point_cloud(self,fName="point_cloud.csv"):
