@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 
 import element
 import node
+import point
 
 
 class BestFitMesh():
@@ -43,6 +44,18 @@ class BestFitMesh():
 
         
 
+    def run(self,pointCloud_fName="test_data.csv"):
+        """
+        Function to run analysis on given point cloud data
+        """
+        
+        # Read point cloud data from file
+        self.points_list = self.read_point_cloud(fName=pointCloud_fName)
+        """
+        _List_ of `Point` objects, defining point cloud to be analysed
+        """
+        
+        
         
     def DefineMesh(self,
                    L_x,L_y,
@@ -54,6 +67,8 @@ class BestFitMesh():
         Note: grid wraps in x- direction i.e. first and last columns of 
         elements connect to 1st column of nodes
         """
+        
+        print("\nDefining mesh...")
         
         self.L_x = L_x
         self.L_y = L_y
@@ -172,35 +187,102 @@ class BestFitMesh():
         print("nElements:\t%d" % len(self.element_dict))
         print("nNodes:\t\t%d" % len(self.node_dict))
         
-    def plot_mesh(self):
         
-        fig, ax = plt.subplots(1)
+    def plot_mesh(self,ax=None,
+                  plot_node_IDs=True,
+                  plot_element_IDs=True):
+        
+        if ax is None:
+            fig, ax = plt.subplots(1)
+        else:
+            fig = ax.get_figure()
+            
         fig.suptitle("Mesh numbering")
            
         for elem_obj in self.element_dict.values():
             
-            IDs = [node.ID for node in elem_obj.connectedNodes]
             x_vals = [node.x for node in elem_obj.connectedNodes]
             y_vals = [node.y for node in elem_obj.connectedNodes]
                 
             ax.plot(x_vals,y_vals,'k',marker='.',markeredgecolor='r')
             
-            for _x,_y,_ID in zip(x_vals,y_vals,IDs):
-                ax.text(_x,_y,"%d" % _ID,color='r')
-                
-            ax.text(numpy.mean(x_vals),numpy.mean(y_vals),"%d" % elem_obj.ID)
+            if plot_element_IDs:
+                ax.text(numpy.mean(x_vals),numpy.mean(y_vals),
+                        "%d" % elem_obj.ID)
+            
+        if plot_node_IDs:
+            for nodeobj in self.node_dict.values():
+                ax.text(nodeobj.x,nodeobj.y,"%d" % nodeobj.ID,color='r')
             
         ax.set_xlim([0,self.L_x])
         ax.set_ylim([0,self.L_y])
         ax.set_xlabel("Distance in x")
         ax.set_ylabel("Distance in y")
         
+        return fig, ax
+    
+    def plot_points(self,**kwargs):
+        """
+        Plots xy locations of points in the point cloud being analysed
+        """
+        
+        fig,ax = self.plot_mesh(kwargs)
+        
+        points_xyz = self.points_xyz
+        ax.plot(points_xyz[:,0],points_xyz[:,1],'b.')
+        
+        
+    def read_point_cloud(self,fName="point_cloud.csv"):
+        """
+        Read point cloud xyz data from .csv file
+        """
+        
+        print("\nReading point cloud data from '%s'..." % fName)
+        data = numpy.genfromtxt(fName,delimiter=",",skip_header=1)
+        
+        # Define list of point objects
+        point_list = []
+        for r in range(data.shape[0]):
+            point_list.append(point.Point(data[r,:]))
+            
+        print("%d points defined" % len(point_list))
+        
+        # Check points within expected domain
+        self.check_point_cloud(point_list)
+        
+        return point_list
+    
+    
+    def check_point_cloud(self,point_list=None) -> bool:
+        """
+        Check point cloud points lie within expected domain
+        """
+        
+        if point_list is None:
+            point_list = self.point_list 
+        
+        x_vals = [p.x for p in point_list]
+        y_vals = [p.y for p in point_list]
+        
+        xmin = numpy.min(x_vals)
+        xmax = numpy.max(x_vals)
+        ymin = numpy.min(y_vals)
+        ymax = numpy.max(y_vals)
+        
+        if xmin<0 or ymin<0 or xmax>self.L_x or ymax>self.L_y:
+            raise ValueError("Points to be in domain [0,Lx],[0,Ly]\n" + 
+                             "x domain: [%.2f, %.2f]\n" % (xmin,xmax) +
+                             "y domain: [%.2f, %.2f]" % (ymin,ymax))
+            
+        print("Point cloud checked: all points within expected xy domain")
+        return True
                 
+    
 # Test routine
 if __name__ == "__main__":
     
-    analysis = BestFitMesh(1.0,2.0,0.4,0.52)
-    analysis.plot_mesh()
+    analysis = BestFitMesh(1.0,2.0,0.6,0.7)
+    analysis.run()
 
 #
 #        # -----
@@ -215,7 +297,7 @@ if __name__ == "__main__":
 #        # -----
 #
 #        # Read in results data from file
-#        resultsData = npy.asmatrix(npy.genfromtxt("Data/" + fName,delimiter=",",skip_header=0))
+#        
 #
 #        Xi = resultsData[:,0]
 #        Yi = resultsData[:,1]
