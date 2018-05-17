@@ -8,6 +8,7 @@ Defines node class
 import numpy as npy
 
 
+
 class Node():
     
     def __init__(self,ID,x,y):

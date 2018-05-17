@@ -5,9 +5,11 @@ Defines element class
 @author: rihy
 """
 
+
+
 class Element():
     
-    def __init__(self,ID,connectedNodes):
+    def __init__(self,ID:int,connectedNodes):
         
         self.ID = ID
         """
