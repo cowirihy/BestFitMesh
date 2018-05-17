@@ -11,7 +11,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib.colors import ListedColormap
-% pylab
 
 # Set up progress bar functionality
 from ipywidgets import FloatProgress
@@ -26,23 +25,37 @@ import node
 # *** MESHING FUNCTIONS ***/
 
 # Define node positions
-def DefineNodes():
+def DefineNodes(Le_x:float,Le_y:float,
+                nElements_x:int,nElements_y:int,
+                verbose=True):
 
-    nNodes = int(nElements_x*(nElements_y+1))   # note nodes wrap-around in circumferential x- direction
+    # Determine number of nodes
+    # Note nodes wrap-around in circumferential x- direction
+    nNodes_x = nElements_x
+    nNodes_y = nElements_y + 1
+    nNodes = nNodes_x * nNodes_y
     print("nNodes=%d" % nNodes)
+    
+    # Determine xy coordinates of nodes on regular grid
+    x_vals = npy.linspace(0,Le_x*nNodes_x,nNodes_x)
+    y_vals = npy.linspace(0,Le_y*nNodes_y,nNodes_y)
 
-    nodeCoords = npy.asmatrix(npy.zeros((nNodes,2)))
+    node_xy = npy.meshgrid(x_vals,y_vals)
+    node_xy = npy.reshape(node_xy,(nNodes,2))
 
-    for n in arange(0,nNodes):
-        r = n // nElements_x
-        c = n % nElements_x
-        nodeCoords[n,0] = c*Le_x
-        nodeCoords[n,1] = r*Le_y
+    # Define node objects
+    node_list = []
+    for n in range(nNodes):
+        
+        node_list.append(node.Node(ID=n,x=node_xy[n,0],y=node_xy[n,1]))
+        
+    if verbose:
+        print("Node details:\n")
+        [x.print_details() for x in node_list]
 
-    nDofs = int(4*nNodes)
-    print("nDofs=%d" % nDofs)
+    return node_list
 
-    return nodeCoords, nNodes, nDofs
+#%%
     
 def DefineElements():
     

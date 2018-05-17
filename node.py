@@ -40,5 +40,13 @@ class Node():
         self.elements.append(elementObj)
         
         
+    def print_details(self):
+        
+        for key, val in vars(self).items():
+            
+            print("{0}:".format(key))
+            print(val)
+        
+        print("")
         
 
