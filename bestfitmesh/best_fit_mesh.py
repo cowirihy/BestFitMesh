@@ -260,7 +260,7 @@ class BestFitMesh():
         stats_vals = numpy.reshape(stats_vals,(self.nElements_x,self.nElements_y))
         
         # Select colormap to use
-        if stat_name=='num':
+        if stat_name=='num' or stat_name=='ID':
             cmap='Greys_r'
         else:
             cmap='bwr'
@@ -273,13 +273,13 @@ class BestFitMesh():
             
         # Define scale for colors
         absmax = numpy.max(numpy.abs(stats_vals))
-        if stat_name!='num':
-            vmin=-absmax
-            vmax=+absmax
-        else:
+        if stat_name=='num' or stat_name=='ID':
             vmin=0
             vmax=absmax
-        
+        else:
+            vmin=-absmax
+            vmax=+absmax
+            
         # Produce plot
         h = ax.imshow(stats_vals.T,cmap=cmap,
                       interpolation='none',
@@ -379,7 +379,9 @@ class BestFitMesh():
 if __name__ == "__main__":
     
     analysis = BestFitMesh(8.63,3.054,0.3,0.3)
+    analysis.plot_mesh()
     analysis.run()
+    analysis.plot_stats(stat_name='ID')
     analysis.plot_stats(stat_name='num')
     analysis.plot_stats(stat_name='mean')
 

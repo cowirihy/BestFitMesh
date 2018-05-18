@@ -104,6 +104,8 @@ class Element():
         * 'skewness', return skewness (3rd moment) of z values
         
         * 'kurtosis', return excess kurtosis (4th moment) of z values
+
+	Also `ID` can be used to return element ID.
         
         ***
         Options:
@@ -118,8 +120,11 @@ class Element():
         if use_residuals:
             z_vals = z_vals
             print("Not yet implemented!!!")
+
+        if stat_name == 'ID':
+            return self.ID
         
-        if stat_name == 'num':
+        elif stat_name == 'num':
             return len(z_vals)
         
         elif stat_name == 'mean':
