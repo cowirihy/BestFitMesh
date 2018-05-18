@@ -226,6 +226,7 @@ class BestFitMesh():
         
         return fig, ax
     
+    
     def plot_points(self,**kwargs):
         """
         Plots xy locations of points in the point cloud being analysed
@@ -236,9 +237,10 @@ class BestFitMesh():
         x_vals = [p.x for p in self.points_list]
         y_vals = [p.y for p in self.points_list]
         
-        ax.plot(x_vals,y_vals,'b.')
+        ax.plot(x_vals,y_vals,'b.',markersize=0.5)
         
         fig.suptitle("Mesh with point cloud overlaid")
+        fig.set_size_inches((14,7))
         
         
     def read_point_cloud(self,fName="point_cloud.csv"):
@@ -291,7 +293,8 @@ class BestFitMesh():
         ymax = numpy.max(y_vals)
         
         if xmin<0 or ymin<0 or xmax>self.L_x or ymax>self.L_y:
-            raise ValueError("Points to be in domain [0,Lx],[0,Ly]\n" + 
+            raise ValueError("Points to be in domain " + 
+                             "[0,%.2f],[0,%.2f]\n" % (self.L_x,self.L_y) + 
                              "x domain: [%.2f, %.2f]\n" % (xmin,xmax) +
                              "y domain: [%.2f, %.2f]" % (ymin,ymax))
             
@@ -322,7 +325,7 @@ class BestFitMesh():
 # Test routine
 if __name__ == "__main__":
     
-    analysis = BestFitMesh(1.0,2.0,0.6,0.7)
+    analysis = BestFitMesh(8.63,3.054,0.3,0.3)
     analysis.run()
 
 #
