@@ -8,10 +8,15 @@ Created on Thu May 17 22:06:18 2018
 import numpy
 import matplotlib.pyplot as plt
 from collections import OrderedDict
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+from scipy import sparse
 
 import element
 import node
 import point
+
+# Set default size for figures
+plt.rcParams['figure.figsize'] = (14, 8)
 
 
 class BestFitMesh():
@@ -40,7 +45,7 @@ class BestFitMesh():
         """
 
         # Define elements & nodes
-        self.DefineMesh(length_x,length_y,Le_x,Le_y,verbose=verbose)
+        self.define_mesh(length_x,length_y,Le_x,Le_y,verbose=verbose)
 
         
 
@@ -56,7 +61,7 @@ class BestFitMesh():
         """
         
         # Calculate least squares mesh
-        #rslts_dict = SolveLeastSquares()
+        rslts_dict = self.solve_for_best_fit()
         
         
         if makePlots:
@@ -66,10 +71,10 @@ class BestFitMesh():
         
         
         
-    def DefineMesh(self,
-                   L_x,L_y,
-                   Le_x_target,Le_y_target,
-                   verbose=False):
+    def define_mesh(self,
+                    L_x,L_y,
+                    Le_x_target,Le_y_target,
+                    verbose=False):
         """
         Define a grid of elements and nodes
         
@@ -108,6 +113,23 @@ class BestFitMesh():
         
         if verbose:
             self.print_mesh_details()
+            
+    
+    def solve_for_best_fit(self):
+        """
+        Solve for best fit mesh, by determining nodal freedoms to minimise 
+        SSE of residuals
+        """
+        
+        nFreedoms = len(self.node_dict)*4
+    
+        # Assemble A matrix and b vector by iterating over all elements
+        
+        for elem_obj in self.element_dict.values():
+            
+            A = elem_obj.assemble_regression_matrices(nFreedoms)
+    
+        # return dict
         
             
     def define_nodes(self,Le_x:float,Le_y:float,
@@ -210,7 +232,7 @@ class BestFitMesh():
             fig = ax.get_figure()
             
         fig.suptitle("Mesh numbering")
-           
+                   
         if plot_elements:
             for elem_obj in self.element_dict.values():
                 elem_obj.plot(ax,plot_ID=plot_element_IDs)
@@ -240,7 +262,6 @@ class BestFitMesh():
         ax.plot(x_vals,y_vals,'b.',markersize=0.5)
         
         fig.suptitle("Mesh with point cloud overlaid")
-        fig.set_size_inches((14,7))
         
         
     def plot_stats(self,
@@ -257,42 +278,71 @@ class BestFitMesh():
                      for e in self.element_dict.values()]
         
         # Reshape into grid
-        stats_vals = numpy.reshape(stats_vals,(self.nElements_x,self.nElements_y))
+        stats_vals = numpy.reshape(stats_vals,
+                                   (self.nElements_y,self.nElements_x))
         
-        # Select colormap to use
-        if stat_name=='num' or stat_name=='ID':
-            cmap='Greys_r'
-        else:
-            cmap='bwr'
-        
-        # Plot as image plot
+        # Get figure and axis to plot to
         if ax is None:
             fig, ax = plt.subplots()
         else:
             fig = ax.get_figure()
             
-        # Define scale for colors
+        # Define scale for colors and colormap to use
         absmax = numpy.max(numpy.abs(stats_vals))
-        if stat_name=='num' or stat_name=='ID':
+        
+        pos_stats = ['num','ID','std']
+        
+        if stat_name in pos_stats:
             vmin=0
             vmax=absmax
+            cmap='Greys_r'
         else:
             vmin=-absmax
             vmax=+absmax
+            cmap='bwr'
+            
+        # Get axis for colorbar
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes('right', size='5%', pad=0.05)
             
         # Produce plot
-        h = ax.imshow(stats_vals.T,cmap=cmap,
+        h = ax.imshow(stats_vals,cmap=cmap,
                       interpolation='none',
                       vmin=vmin,vmax=vmax)
         ax.invert_yaxis()
         
         # Annotate with labels etc
         ax.set_title("'%s'" % stat_name)
-        ax.set_xlabel("Columns in x")
-        ax.set_ylabel("Rows in y")
-        fig.colorbar(h)
+        #ax.set_xlabel("Columns in x")
+        #ax.set_ylabel("Rows in y")
+        fig.colorbar(h,cax=cax,orientation='vertical')
         
         return fig, ax
+    
+    
+    def plot_stats_multiple(self,
+                            stat_names:list=['num','mean','std'],
+                            use_residuals=False,
+                            nCols:int=2):
+        """
+        Produces a figure including multiple stats plots
+        """
+        
+        nPlots = len(stat_names)
+        nRows = int(numpy.ceil(nPlots/nCols))
+        
+        fig, axarr = plt.subplots(nRows,nCols,sharex=True,sharey=True)
+        axarr = numpy.ravel(axarr)
+        
+        fig.subplots_adjust(wspace=0.3)
+        
+        for ax, stat_name in zip(axarr,stat_names):
+            
+            self.plot_stats(ax=ax,stat_name=stat_name,
+                            use_residuals=use_residuals)
+        
+            ax.set_xticks([])
+            ax.set_yticks([])
         
         
         
@@ -381,9 +431,7 @@ if __name__ == "__main__":
     analysis = BestFitMesh(8.63,3.054,0.3,0.3)
     analysis.plot_mesh()
     analysis.run()
-    analysis.plot_stats(stat_name='ID')
-    analysis.plot_stats(stat_name='num')
-    analysis.plot_stats(stat_name='mean')
+    analysis.plot_stats_multiple(stat_names=['num','kurtosis'])
 
 #
 #        # -----

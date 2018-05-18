@@ -9,8 +9,13 @@ Defines freedom class
 
 class Freedom():
     
-    def __init__(self,node_obj,index:int):
-                
+    def __init__(self,ID:int,node_obj,index:int):
+          
+        self.ID = ID
+        """
+        Integer ID for freedom object
+        """
+        
         self.node_obj = node_obj
         """
         Node object to which freedom relates

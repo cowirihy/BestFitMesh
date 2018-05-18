@@ -38,7 +38,7 @@ class Node():
         _Boolean_, denotes whether node is active or not
         """
         
-        self.freedoms_list = [freedom.Freedom(self,i) for i in range(4)]
+        self.freedoms_list = [freedom.Freedom(4*ID+i,self,i) for i in range(4)]
         """
         List of freedom objects relating to this node
         """
