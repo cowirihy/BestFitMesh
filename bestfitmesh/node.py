@@ -7,7 +7,7 @@ Defines node class
 
 import numpy as npy
 
-
+import freedom
 
 class Node():
     
@@ -38,7 +38,10 @@ class Node():
         _Boolean_, denotes whether node is active or not
         """
         
-        self.freedomVals = npy.zeros((4,))
+        self.freedoms_list = [freedom.Freedom(self,i) for i in range(4)]
+        """
+        List of freedom objects relating to this node
+        """
         
         
     def connect_element(self,elementObj):
@@ -52,6 +55,7 @@ class Node():
             
             print("{0}:".format(key))
             print(val)
+            print("")
         
         print("")
         

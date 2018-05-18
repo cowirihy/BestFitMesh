@@ -41,6 +41,49 @@ class Element():
         Length in y direction
         """
         
+        self.points_list = []
+        """
+        List of points associated with element
+        """
+        
+    def add_point(self,point_obj,check_domain=True,verbose=False):
+        """
+        Associates 'Point' object with element
+        """
+        
+        if verbose:
+            print("Point %d assigned to element %d" % (point_obj.ID,self.ID))
+        
+        self.check_point_within_domain(point_obj)
+        
+        self.points_list.append(point_obj)
+        point_obj.element_obj = self
+        
+        
+    def check_point_within_domain(self,point_obj) -> bool:
+        """
+        Tests whether point lies within the element domain
+        """
+        
+        min_x = self.connectedNodes[0].x
+        min_y = self.connectedNodes[0].y
+        max_x = min_x + self.Le_x
+        max_y = min_y + self.Le_y
+        
+        x = point_obj.x
+        y = point_obj.y
+        
+        if x < min_x or x > max_x or y < min_y or y > max_y:
+            raise ValueError("Point outside element domain!\n" + 
+                             "Element ID: %d\n" % self.ID + 
+                             "Domain: {0}".format([[min_x,max_x],[min_y,max_y]])+
+                             "Point ID: %d\n" % point_obj.ID +
+                             "Point x: %.2f\n" % point_obj.x + 
+                             "Point y: %.2f\n" % point_obj.y)
+            
+        return True
+        
+        
     def print_details(self):
         """
         Print details of element to console

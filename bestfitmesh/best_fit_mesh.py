@@ -55,6 +55,10 @@ class BestFitMesh():
         _List_ of `Point` objects, defining point cloud to be analysed
         """
         
+        # Calculate least squares mesh
+        #rslts_dict = SolveLeastSquares()
+        
+        
         if makePlots:
             self.plot_points(plot_nodes=False,
                              plot_node_IDs=False,
@@ -244,16 +248,28 @@ class BestFitMesh():
         
         print("\nReading point cloud data from '%s'..." % fName)
         data = numpy.genfromtxt(fName,delimiter=",",skip_header=1)
+        nPoints = data.shape[0]
         
         # Define list of point objects
         point_list = []
-        for r in range(data.shape[0]):
-            point_list.append(point.Point(data[r,:]))
+        for p in range(nPoints):
+            point_list.append(point.Point(p,data[p,:]))
             
-        print("%d points defined" % len(point_list))
+        print("%d points defined" % nPoints)
         
         # Check points within expected domain
         self.check_point_cloud(point_list)
+        
+        # Assign points to elements according to domain
+        for p in point_list:
+            
+            e = self.get_element_from_xy(p.x,p.y)
+            element_obj = self.element_dict[e]
+            element_obj.add_point(p)
+            
+        nPoints_assigned = sum([len(e.points_list) 
+                                for e in self.element_dict.values()])
+        print("%d points assigned to elements" % nPoints_assigned)
         
         return point_list
     
@@ -281,6 +297,26 @@ class BestFitMesh():
             
         print("Point cloud checked: all points within expected xy domain")
         return True
+       
+    
+    def get_element_from_xy(self,xi,yi):
+        """
+        Returns element index, given (x,y) coords
+        """
+   
+        # Determine which element data point is within, given (x,y) coords  
+        colNo = (xi // self.Le_x).astype(int)
+        rowNo = (yi // self.Le_y).astype(int)
+
+        # Correct for nodes that are on the boundary of the rectangular domain  
+        colNo = numpy.where(colNo< self.nElements_x,colNo,self.nElements_x-1)
+        rowNo = numpy.where(rowNo< self.nElements_y,rowNo,self.nElements_y-1)
+        
+        # Get element index
+        e = self.nElements_x*(rowNo)+colNo
+        e = e.astype(int)
+    
+        return e
                 
     
 # Test routine
