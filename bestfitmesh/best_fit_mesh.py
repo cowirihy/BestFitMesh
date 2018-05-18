@@ -7,7 +7,7 @@ Created on Thu May 17 22:06:18 2018
 
 import numpy
 import matplotlib.pyplot as plt
-
+from collections import OrderedDict
 
 import element
 import node
@@ -133,7 +133,7 @@ class BestFitMesh():
         node_xy = numpy.array([[x,y] for y in y_vals for x in x_vals])
     
         # Define node objects
-        node_dict = {}
+        node_dict = OrderedDict()
         
         for n in range(node_xy.shape[0]):
             
@@ -151,7 +151,7 @@ class BestFitMesh():
         assigned clockwise, starting from bottom-left
         """
         
-        element_dict = {}
+        element_dict = OrderedDict()
         
         # Loop over rows and columns  
         index_rc = [(r,c) for r in range(n_y) for c in range(n_x)]
@@ -243,6 +243,59 @@ class BestFitMesh():
         fig.set_size_inches((14,7))
         
         
+    def plot_stats(self,
+                   ax=None,
+                   stat_name:str='num',
+                   use_residuals=False):
+        """
+        Produce pixel plot of selected `stat_name`, evaluated over all points 
+        in each element
+        """
+        
+        # Get stats values to plot
+        stats_vals = [e.calc_stats(stat_name,use_residuals)
+                     for e in self.element_dict.values()]
+        
+        # Reshape into grid
+        stats_vals = numpy.reshape(stats_vals,(self.nElements_x,self.nElements_y))
+        
+        # Select colormap to use
+        if stat_name=='num':
+            cmap='Greys_r'
+        else:
+            cmap='bwr'
+        
+        # Plot as image plot
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig = ax.get_figure()
+            
+        # Define scale for colors
+        absmax = numpy.max(numpy.abs(stats_vals))
+        if stat_name!='num':
+            vmin=-absmax
+            vmax=+absmax
+        else:
+            vmin=0
+            vmax=absmax
+        
+        # Produce plot
+        h = ax.imshow(stats_vals.T,cmap=cmap,
+                      interpolation='none',
+                      vmin=vmin,vmax=vmax)
+        ax.invert_yaxis()
+        
+        # Annotate with labels etc
+        ax.set_title("'%s'" % stat_name)
+        ax.set_xlabel("Columns in x")
+        ax.set_ylabel("Rows in y")
+        fig.colorbar(h)
+        
+        return fig, ax
+        
+        
+        
     def read_point_cloud(self,fName="point_cloud.csv"):
         """
         Read point cloud xyz data from .csv file
@@ -327,6 +380,8 @@ if __name__ == "__main__":
     
     analysis = BestFitMesh(8.63,3.054,0.3,0.3)
     analysis.run()
+    analysis.plot_stats(stat_name='num')
+    analysis.plot_stats(stat_name='mean')
 
 #
 #        # -----

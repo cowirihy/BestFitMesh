@@ -7,6 +7,9 @@ Defines element class
 
 import numpy
 
+from scipy.stats import kurtosis
+from scipy.stats import skew
+
 
 class Element():
     
@@ -82,6 +85,57 @@ class Element():
                              "Point y: %.2f\n" % point_obj.y)
             
         return True
+    
+    
+    def calc_stats(self,stat_name:str,use_residuals:bool=False):
+        """
+        Calculate statistics based on z- coordinates of points associated with 
+        this element
+        
+        ***
+        Accepted `stat_name` arguments:
+            
+        * 'num', returns number of points
+        
+        * 'mean', returns mean z value
+        
+        * 'std', returns standard deviation of z values
+        
+        * 'skewness', return skewness (3rd moment) of z values
+        
+        * 'kurtosis', return excess kurtosis (4th moment) of z values
+        
+        ***
+        Options:
+            
+        * `use_residuals`, can be set to express statistics based on z 
+          residuals rather than z values themselves.
+        
+        """
+        
+        z_vals = [p.z for p in self.points_list]
+        
+        if use_residuals:
+            z_vals = z_vals
+            print("Not yet implemented!!!")
+        
+        if stat_name == 'num':
+            return len(z_vals)
+        
+        elif stat_name == 'mean':
+            return numpy.mean(z_vals)
+        
+        elif stat_name == 'std' or stat_name == 'std dev':
+            return numpy.std(z_vals)
+        
+        elif stat_name == 'skewness' or stat_name == 'skew':
+            return skew(z_vals)
+        
+        elif stat_name == 'kurtosis' or stat_name == 'kurt':
+            return kurtosis(z_vals,fisher=True) # 0.0 expected for normal dist
+        
+        else:
+            raise ValueError("Unexpected `stat_name` passed")
         
         
     def print_details(self):
